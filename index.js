@@ -39,9 +39,10 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const usersCollection = client.db("ronginDb").collection("users");
+    const classesCollection = client.db("ronginDb").collection("classes");
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -49,12 +50,21 @@ async function run() {
 
       res.send({ token })
     })
-    // Warning: use verifyJWT before using verifyAdmin
+    
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
       const user = await usersCollection.findOne(query);
       if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'instructor') {
         return res.status(403).send({ error: true, message: 'forbidden message' });
       }
       next();
@@ -104,8 +114,12 @@ async function run() {
       res.send(result)
     })
     // instructor user apis
-    app.get('/users/instructor/:email'), async (req, res) => {
+    app.get('/users/instructor/:email'), verifyJWT, async (req, res) => {
       const email = req.params.email;
+      console.log(email)
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
       const query = { email: email }
       const user = await usersCollection.findOne(query);
       const result = { instructor: user?.role === 'instructor' }
@@ -120,6 +134,22 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+
+    // Apis of classes
+    app.get('/classes',async(req,res) =>{
+      let query ={}
+      if(req.query?.insEmail){
+        query = {insEmail: req.query.insEmail}
+      }
+      const cursor = classesCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+    app.post('/classes',async(req,res) =>{
+      const theClass = req.body;
+      const result = await classesCollection.insertOne(theClass);
       res.send(result)
     })
 
