@@ -152,13 +152,27 @@ async function run() {
       const result = await classesCollection.insertOne(theClass);
       res.send(result)
     })
-    app.patch('/classes/:id', async (req, res) => {
+    // to update feedback
+    app.patch('/classes/feedback/:id', async (req, res) => {
       const id = req.params.id;
       const theFeedback = req.body.feedback;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           feedback: theFeedback
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+    // to update status
+    app.patch('/classes/status/:id', async (req, res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status
         },
       };
       const result = await classesCollection.updateOne(filter, updateDoc);
