@@ -43,6 +43,7 @@ async function run() {
 
     const usersCollection = client.db("ronginDb").collection("users");
     const classesCollection = client.db("ronginDb").collection("classes");
+    const studentsCollection = client.db("ronginDb").collection("students")
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -50,7 +51,7 @@ async function run() {
 
       res.send({ token })
     })
-    
+
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
@@ -138,16 +139,16 @@ async function run() {
     })
 
     // Apis of classes
-    app.get('/classes',async(req,res) =>{
-      let query ={}
-      if(req.query?.insEmail){
-        query = {insEmail: req.query.insEmail}
+    app.get('/classes', async (req, res) => {
+      let query = {}
+      if (req.query?.insEmail) {
+        query = { insEmail: req.query.insEmail }
       }
       const cursor = classesCollection.find(query);
       const result = await cursor.toArray();
       res.send(result)
     })
-    app.post('/classes',async(req,res) =>{
+    app.post('/classes', async (req, res) => {
       const theClass = req.body;
       const result = await classesCollection.insertOne(theClass);
       res.send(result)
@@ -178,7 +179,20 @@ async function run() {
       const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
-
+    // student related apis
+    app.get('/student/:email', async (req, res) => {
+      const email = req.params.email;
+      let query = { studentEmail: email }
+      const cursor = studentsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+    app.post('/student/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const bookedClass = req.body;
+      const result = await studentsCollection.insertOne(bookedClass)
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
