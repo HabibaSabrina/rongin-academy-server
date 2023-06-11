@@ -150,6 +150,7 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result)
     })
+    
     app.post('/classes', async (req, res) => {
       const theClass = req.body;
       const result = await classesCollection.insertOne(theClass);
@@ -181,6 +182,18 @@ async function run() {
       const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
+    // app.patch('/classes/count/:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   const status = req.body.status;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updateDoc = {
+    //     $set: {
+    //       status: status
+    //     },
+    //   };
+    //   const result = await classesCollection.updateOne(filter, updateDoc);
+    //   res.send(result)
+    // })
     // student related apis
     app.get('/student/:email', async (req, res) => {
       const email = req.params.email;
@@ -200,6 +213,11 @@ async function run() {
     app.post('/student/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
       const bookedClass = req.body;
+      const query = {classId: bookedClass.classId, studentEmail:email}
+      const existingClass = await studentsCollection.findOne(query);
+      if (existingClass) {
+        return res.send({ message: 'Class already exists' })
+      }
       const result = await studentsCollection.insertOne(bookedClass)
       res.send(result);
     })
