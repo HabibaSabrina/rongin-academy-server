@@ -4,6 +4,7 @@ const cors = require('cors');
 require("dotenv").config();
 const app = express();
 const jwt = require('jsonwebtoken')
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -44,6 +45,7 @@ async function run() {
     const usersCollection = client.db("ronginDb").collection("users");
     const classesCollection = client.db("ronginDb").collection("classes");
     const studentsCollection = client.db("ronginDb").collection("students")
+    const paymentCollection = client.db("ronginDb").collection("payments");
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -187,6 +189,13 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result)
     })
+    app.get('/studentpayment/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const theClass = await studentsCollection.findOne(query);
+      console.log(theClass)
+      res.send(theClass);
+    })
     
     app.post('/student/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -196,10 +205,47 @@ async function run() {
     })
     app.delete('/student/:id', async (req, res) => {
       const id = req.params.id;
+      console.log(req.body)
       const query = { _id: new ObjectId(id) }
       const result = await studentsCollection.deleteOne(query);
       res.send(result);
     })
+    // to update feedback
+    app.patch('/student/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          clsStatus: 'enrolled'
+        },
+      };
+      const result = await studentsCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+    
+
+    // Creating payment intent
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    // payment related api
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+      res.send(insertResult);
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
