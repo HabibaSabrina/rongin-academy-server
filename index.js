@@ -182,18 +182,20 @@ async function run() {
       const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
-    // app.patch('/classes/count/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const status = req.body.status;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       status: status
-    //     },
-    //   };
-    //   const result = await classesCollection.updateOne(filter, updateDoc);
-    //   res.send(result)
-    // })
+    
+    app.patch('/classes/count/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $inc: {
+          seat: -1,
+          enrolled: +1
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      console.log(result)
+      res.send(result)
+    })
     // student related apis
     app.get('/student/:email', async (req, res) => {
       const email = req.params.email;
