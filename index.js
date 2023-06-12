@@ -290,7 +290,7 @@ async function run() {
       })
     })
 
-    // payment related api
+    // payment related apis
     app.get('/payments', verifyJWT, async (req, res) => {
       let query = {}
       let options={}
