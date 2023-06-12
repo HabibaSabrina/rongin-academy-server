@@ -84,6 +84,11 @@ async function run() {
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
+    app.get('/users/instructor/popular', async (req, res) => {
+      const query = { role: 'instructor' }
+      const result = await usersCollection.find(query).limit(6).toArray();
+      res.send(result);
+    });
     app.post('/users', async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -210,6 +215,18 @@ async function run() {
       console.log(result)
       res.send(result)
     })
+    app.patch('/classes/update/:id', async (req, res) => {
+      const id = req.params.id;
+      const seat = parseInt(req.body.seat);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          seat: seat
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
     // student related apis
     app.get('/student/:email', async (req, res) => {
       const email = req.params.email;
@@ -274,6 +291,20 @@ async function run() {
     })
 
     // payment related api
+    app.get('/payments', verifyJWT, async (req, res) => {
+      let query = {}
+      let options={}
+      if (req.query?.email) {
+        
+        query = { email: req.query.email }
+        options ={
+          sort:{'date': -1}
+        }
+      }
+      const cursor = paymentCollection.find(query, options);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
     app.post('/payments', verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
