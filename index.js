@@ -79,6 +79,11 @@ async function run() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+    app.get('/users/instructor', async (req, res) => {
+      const query = { role: 'instructor' }
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
     app.post('/users', async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -147,6 +152,15 @@ async function run() {
         query = { insEmail: req.query.insEmail }
       }
       const cursor = classesCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+    app.get('/classes/popular', async (req, res) => {
+      let query = {status: 'approved'}
+      const options ={
+        sort:{'enrolled': -1}
+      }
+      const cursor = classesCollection.find(query, options).limit(6);
       const result = await cursor.toArray();
       res.send(result)
     })
